@@ -1,5 +1,6 @@
 """Network monitoring and Tailscale utilities."""
 
+import json
 import socket
 import subprocess
 from typing import Dict, Any, Optional, List
@@ -108,7 +109,6 @@ def get_tailscale_status() -> Optional[Dict[str, Any]]:
             timeout=5
         )
 
-        import json
         status_data = json.loads(result.stdout)
 
         # Extract relevant information
