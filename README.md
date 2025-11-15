@@ -285,6 +285,25 @@ Environment variables (set in `.env`):
 - Check Tailscale status: `tailscale status`
 - Authenticate if needed: `tailscale up`
 
+### CLI commands not found
+**Always use `uv run` prefix on Termux:**
+```bash
+# Correct
+uv run droidvm-tools status
+
+# Alternative: use the wrapper script
+./droidvm-tools status
+```
+
+### Permission denied errors (Termux-specific)
+Some system metrics may show "Permission denied" or "N/A" on Android/Termux due to restricted `/proc` access. This is normal and the app handles these gracefully:
+- CPU frequency might not be available
+- Some system stats may be limited
+- Battery info works via Android-specific APIs
+- Most features still work fine!
+
+**Note**: The app is designed to gracefully handle Termux permission restrictions.
+
 ## License
 
 MIT

@@ -151,6 +151,22 @@ Only works when on the same WiFi:
 
 ## 🛠️ Troubleshooting
 
+### CLI commands not found
+**Always use `uv run` prefix:**
+```bash
+# Correct way
+uv run droidvm-tools status
+
+# Alternative: use wrapper script
+./droidvm-tools status
+```
+
+### Permission denied errors
+Some metrics may show "N/A" on Termux due to `/proc` restrictions - this is normal!
+- The app handles these gracefully
+- Most features still work fine
+- Battery info uses Android-specific APIs
+
 ### Server won't start
 ```bash
 # Check if port is in use

@@ -88,7 +88,33 @@ def get_memory_info() -> Dict[str, Any]:
 def get_disk_info() -> Dict[str, Any]:
     """Get disk usage information."""
     partitions = []
-    for partition in psutil.disk_partitions():
+
+    try:
+        disk_partitions = psutil.disk_partitions(all=True)
+    except (PermissionError, OSError) as e:
+        # Termux/Android may restrict access to /proc/filesystems
+        # Try to get at least the root partition
+        try:
+            root_usage = psutil.disk_usage('/')
+            return {
+                "partitions": [{
+                    "device": "rootfs",
+                    "mountpoint": "/",
+                    "filesystem": "unknown",
+                    "total": _bytes_to_human_readable(root_usage.total),
+                    "used": _bytes_to_human_readable(root_usage.used),
+                    "free": _bytes_to_human_readable(root_usage.free),
+                    "percentage": root_usage.percent,
+                }],
+                "note": "Limited access due to system permissions"
+            }
+        except Exception:
+            return {
+                "partitions": [],
+                "error": "Unable to access disk information"
+            }
+
+    for partition in disk_partitions:
         try:
             partition_usage = psutil.disk_usage(partition.mountpoint)
             partitions.append({
@@ -100,7 +126,7 @@ def get_disk_info() -> Dict[str, Any]:
                 "free": _bytes_to_human_readable(partition_usage.free),
                 "percentage": partition_usage.percent,
             })
-        except PermissionError:
+        except (PermissionError, OSError):
             # Skip partitions that can't be accessed
             continue
 
