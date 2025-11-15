@@ -8,7 +8,8 @@ from rich.console import Console
 from rich.table import Table
 from rich import print as rprint
 
-from droidvm_tools.tools import system, network
+from droidvm_tools.tools import system
+from droidvm_tools.tools import network as network_tools
 
 app = typer.Typer(
     name="droidvm-tools",
@@ -118,7 +119,7 @@ def network():
     """Display network information."""
     console.print("\n[bold cyan]Network Information[/bold cyan]")
 
-    net_info = network.get_network_info()
+    net_info = network_tools.get_network_info()
 
     for iface_name, iface_data in net_info["interfaces"].items():
         console.print(f"\n[bold yellow]{iface_name}[/bold yellow]")
