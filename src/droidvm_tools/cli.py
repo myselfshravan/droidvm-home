@@ -137,7 +137,7 @@ def netstat():
     """Display network statistics."""
     console.print("\n[bold cyan]Network Statistics[/bold cyan]")
 
-    stats = network.get_network_stats()
+    stats = network_tools.get_network_stats()
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="green")
@@ -153,8 +153,8 @@ def tailscale():
     """Display Tailscale VPN status."""
     console.print("\n[bold cyan]Tailscale Status[/bold cyan]")
 
-    ts_status = network.get_tailscale_status()
-    ts_ip = network.get_tailscale_ip()
+    ts_status = network_tools.get_tailscale_status()
+    ts_ip = network_tools.get_tailscale_ip()
 
     if ts_status is None:
         console.print("[yellow]Tailscale is not installed or not running[/yellow]")
@@ -213,9 +213,9 @@ def status(json_output: bool = typer.Option(False, "--json", "-j", help="Output 
         "disk": system.get_disk_info(),
         "battery": system.get_battery_info(),
         "network": {
-            "stats": network.get_network_stats(),
-            "tailscale_ip": network.get_tailscale_ip(),
-            "hostname": network.get_hostname(),
+            "stats": network_tools.get_network_stats(),
+            "tailscale_ip": network_tools.get_tailscale_ip(),
+            "hostname": network_tools.get_hostname(),
         },
         "tmux_sessions": system.get_tmux_sessions(),
         "processes": system.get_process_count(),
