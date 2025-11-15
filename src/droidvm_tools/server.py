@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
@@ -18,6 +19,15 @@ app = FastAPI(
     title="DroidVM Tools API",
     description="API for managing and monitoring Android phone as a tiny home server",
     version="0.1.0",
+)
+
+# Add CORS middleware to handle cross-origin requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 
