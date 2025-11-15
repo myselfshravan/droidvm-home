@@ -11,6 +11,11 @@ import psutil
 
 def get_system_info() -> Dict[str, Any]:
     """Get comprehensive system information."""
+    try:
+        boot_time = datetime.fromtimestamp(psutil.boot_time()).isoformat()
+    except (PermissionError, OSError):
+        boot_time = "N/A"
+
     return {
         "hostname": platform.node(),
         "platform": platform.system(),
@@ -19,37 +24,64 @@ def get_system_info() -> Dict[str, Any]:
         "architecture": platform.machine(),
         "processor": platform.processor(),
         "python_version": platform.python_version(),
-        "boot_time": datetime.fromtimestamp(psutil.boot_time()).isoformat(),
+        "boot_time": boot_time,
     }
 
 
 def get_cpu_info() -> Dict[str, Any]:
     """Get CPU usage and information."""
-    cpu_freq = psutil.cpu_freq()
+    try:
+        cpu_freq = psutil.cpu_freq()
+    except (PermissionError, OSError):
+        cpu_freq = None
+
+    try:
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        cpu_usage_per_core = psutil.cpu_percent(interval=0.1, percpu=True)
+    except (PermissionError, OSError):
+        cpu_usage = 0
+        cpu_usage_per_core = []
+
     return {
         "physical_cores": psutil.cpu_count(logical=False),
         "total_cores": psutil.cpu_count(logical=True),
         "max_frequency": f"{cpu_freq.max:.2f}Mhz" if cpu_freq else "N/A",
         "min_frequency": f"{cpu_freq.min:.2f}Mhz" if cpu_freq else "N/A",
         "current_frequency": f"{cpu_freq.current:.2f}Mhz" if cpu_freq else "N/A",
-        "cpu_usage_percent": psutil.cpu_percent(interval=1),
-        "cpu_usage_per_core": psutil.cpu_percent(interval=1, percpu=True),
+        "cpu_usage_percent": cpu_usage,
+        "cpu_usage_per_core": cpu_usage_per_core,
     }
 
 
 def get_memory_info() -> Dict[str, Any]:
     """Get memory usage information."""
-    svmem = psutil.virtual_memory()
-    swap = psutil.swap_memory()
+    try:
+        svmem = psutil.virtual_memory()
+    except (PermissionError, OSError):
+        return {
+            "total": "N/A",
+            "available": "N/A",
+            "used": "N/A",
+            "percentage": 0,
+            "swap_total": "N/A",
+            "swap_used": "N/A",
+            "swap_percentage": 0,
+            "error": "Permission denied"
+        }
+
+    try:
+        swap = psutil.swap_memory()
+    except (PermissionError, OSError):
+        swap = None
 
     return {
         "total": _bytes_to_human_readable(svmem.total),
         "available": _bytes_to_human_readable(svmem.available),
         "used": _bytes_to_human_readable(svmem.used),
         "percentage": svmem.percent,
-        "swap_total": _bytes_to_human_readable(swap.total),
-        "swap_used": _bytes_to_human_readable(swap.used),
-        "swap_percentage": swap.percent,
+        "swap_total": _bytes_to_human_readable(swap.total) if swap else "N/A",
+        "swap_used": _bytes_to_human_readable(swap.used) if swap else "N/A",
+        "swap_percentage": swap.percent if swap else 0,
     }
 
 
