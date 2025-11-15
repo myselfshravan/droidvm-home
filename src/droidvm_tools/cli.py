@@ -210,10 +210,8 @@ def status(json_output: bool = typer.Option(False, "--json", "-j", help="Output 
         "system": system.get_system_info(),
         "cpu": system.get_cpu_info(),
         "memory": system.get_memory_info(),
-        "disk": system.get_disk_info(),
         "battery": system.get_battery_info(),
         "network": {
-            "stats": network_tools.get_network_stats(),
             "tailscale_ip": network_tools.get_tailscale_ip(),
             "hostname": network_tools.get_hostname(),
         },
