@@ -135,7 +135,13 @@ def get_disk_info() -> Dict[str, Any]:
 
 def get_battery_info() -> Optional[Dict[str, Any]]:
     """Get battery information (if available)."""
-    battery = psutil.sensors_battery()
+    try:
+        battery = psutil.sensors_battery()
+    except (PermissionError, OSError, NotImplementedError):
+        # Termux/Android may restrict access to /sys/class/power_supply
+        # or battery info may not be available via standard Linux APIs
+        return None
+
     if battery is None:
         return None
 
@@ -173,15 +179,25 @@ def get_tmux_sessions() -> list[Dict[str, str]]:
 def get_process_count() -> Dict[str, int]:
     """Get count of running processes by status."""
     statuses = {}
-    for proc in psutil.process_iter(['status']):
-        try:
-            status = proc.info['status']
-            statuses[status] = statuses.get(status, 0) + 1
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
+
+    try:
+        for proc in psutil.process_iter(['status']):
+            try:
+                status = proc.info['status']
+                statuses[status] = statuses.get(status, 0) + 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        total = len(psutil.pids())
+    except (PermissionError, OSError):
+        return {
+            "total": 0,
+            "by_status": {},
+            "error": "Permission denied"
+        }
 
     return {
-        "total": len(psutil.pids()),
+        "total": total,
         "by_status": statuses,
     }
 

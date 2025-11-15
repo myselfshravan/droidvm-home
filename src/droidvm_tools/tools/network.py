@@ -47,7 +47,20 @@ def get_network_info() -> Dict[str, Any]:
 
 def get_network_stats() -> Dict[str, Any]:
     """Get network I/O statistics."""
-    net_io = psutil.net_io_counters()
+    try:
+        net_io = psutil.net_io_counters()
+    except (PermissionError, OSError):
+        return {
+            "bytes_sent": "N/A",
+            "bytes_recv": "N/A",
+            "packets_sent": 0,
+            "packets_recv": 0,
+            "errors_in": 0,
+            "errors_out": 0,
+            "drop_in": 0,
+            "drop_out": 0,
+            "error": "Permission denied"
+        }
 
     return {
         "bytes_sent": _bytes_to_human_readable(net_io.bytes_sent),
