@@ -158,9 +158,15 @@ setup_base_packages() {
         curl \
         python \
         proot-distro \
+        termux-api \
         >> "$LOG_FILE" 2>&1
 
     print_success "Core packages installed"
+
+    echo -e "${CYAN}Installing Termux:API for Android system access...${NC}"
+    print_warning "IMPORTANT: Install 'Termux:API' app from F-Droid for battery/WiFi info!"
+    print_info "F-Droid: https://f-droid.org/packages/com.termux.api/"
+
     log "Base packages installed successfully"
 }
 

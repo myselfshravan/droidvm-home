@@ -1,5 +1,6 @@
 """System monitoring and information utilities."""
 
+import json
 import os
 import platform
 import subprocess
@@ -134,7 +135,16 @@ def get_disk_info() -> Dict[str, Any]:
 
 
 def get_battery_info() -> Optional[Dict[str, Any]]:
-    """Get battery information (if available)."""
+    """Get battery information (if available).
+
+    Tries Termux:API first (termux-battery-status), falls back to psutil.
+    """
+    # Try Termux:API first (works on Android/Termux)
+    termux_battery = _get_termux_battery_status()
+    if termux_battery:
+        return termux_battery
+
+    # Fallback to psutil (usually fails on Termux due to permissions)
     try:
         battery = psutil.sensors_battery()
     except (PermissionError, OSError, NotImplementedError):
@@ -150,6 +160,100 @@ def get_battery_info() -> Optional[Dict[str, Any]]:
         "power_plugged": battery.power_plugged,
         "time_left": str(battery.secsleft) if battery.secsleft != psutil.POWER_TIME_UNLIMITED else "Unlimited",
     }
+
+
+def _get_termux_battery_status() -> Optional[Dict[str, Any]]:
+    """Get battery status using Termux:API.
+
+    Requires: pkg install termux-api && install Termux:API app from F-Droid
+    """
+    try:
+        result = subprocess.run(
+            ["termux-battery-status"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True
+        )
+
+        data = json.loads(result.stdout)
+
+        return {
+            "percentage": data.get("percentage", 0),
+            "power_plugged": data.get("plugged") != "UNPLUGGED",
+            "status": data.get("status", "UNKNOWN"),
+            "health": data.get("health", "UNKNOWN"),
+            "temperature": data.get("temperature", 0),
+            "current": data.get("current", 0),
+        }
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+            FileNotFoundError, json.JSONDecodeError, KeyError):
+        # Termux:API not installed or not available
+        return None
+
+
+def get_termux_wifi_info() -> Optional[Dict[str, Any]]:
+    """Get WiFi connection info using Termux:API.
+
+    Requires: pkg install termux-api && install Termux:API app from F-Droid
+    """
+    try:
+        result = subprocess.run(
+            ["termux-wifi-connectioninfo"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True
+        )
+
+        data = json.loads(result.stdout)
+
+        return {
+            "ssid": data.get("ssid", "Unknown"),
+            "bssid": data.get("bssid", "Unknown"),
+            "ip": data.get("ip", "Unknown"),
+            "link_speed_mbps": data.get("link_speed_mbps", 0),
+            "rssi": data.get("rssi", 0),
+            "frequency_mhz": data.get("frequency_mhz", 0),
+            "network_id": data.get("network_id", -1),
+        }
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+            FileNotFoundError, json.JSONDecodeError, KeyError):
+        # Termux:API not installed or not available
+        return None
+
+
+def get_termux_device_info() -> Optional[Dict[str, Any]]:
+    """Get device telephony info using Termux:API.
+
+    Requires: pkg install termux-api && install Termux:API app from F-Droid
+    """
+    try:
+        result = subprocess.run(
+            ["termux-telephony-deviceinfo"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True
+        )
+
+        data = json.loads(result.stdout)
+
+        return {
+            "device_id": data.get("device_id", "Unknown"),
+            "device_software_version": data.get("device_software_version", "Unknown"),
+            "phone_count": data.get("phone_count", 0),
+            "phone_type": data.get("phone_type", "Unknown"),
+            "network_operator": data.get("network_operator", "Unknown"),
+            "network_operator_name": data.get("network_operator_name", "Unknown"),
+            "network_country_iso": data.get("network_country_iso", "Unknown"),
+            "network_type": data.get("network_type", "Unknown"),
+            "sim_state": data.get("sim_state", "Unknown"),
+        }
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+            FileNotFoundError, json.JSONDecodeError, KeyError):
+        # Termux:API not installed or not available
+        return None
 
 
 def get_tmux_sessions() -> list[Dict[str, str]]:

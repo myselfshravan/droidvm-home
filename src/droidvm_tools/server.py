@@ -225,10 +225,51 @@ async def ip_info() -> Dict[str, Any]:
         )
 
 
+@app.get("/network/wifi")
+async def wifi_info() -> Dict[str, Any]:
+    """Get WiFi connection information via Termux:API."""
+    try:
+        info = system.get_termux_wifi_info()
+        if info is None:
+            return {
+                "success": True,
+                "data": None,
+                "message": "WiFi info not available (Termux:API required)"
+            }
+        return {"success": True, "data": info}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.get("/device/info")
+async def device_info() -> Dict[str, Any]:
+    """Get Android device information via Termux:API."""
+    try:
+        info = system.get_termux_device_info()
+        if info is None:
+            return {
+                "success": True,
+                "data": None,
+                "message": "Device info not available (Termux:API required)"
+            }
+        return {"success": True, "data": info}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
 @app.get("/status")
 async def full_status() -> Dict[str, Any]:
     """Get comprehensive system status."""
     try:
+        # Get WiFi info from Termux:API
+        wifi_info = system.get_termux_wifi_info()
+
         return {
             "success": True,
             "data": {
@@ -240,6 +281,7 @@ async def full_status() -> Dict[str, Any]:
                 "network": {
                     "tailscale_ip": network.get_tailscale_ip(),
                     "hostname": network.get_hostname(),
+                    "wifi": wifi_info,
                 },
                 "tmux_sessions": system.get_tmux_sessions(),
                 "processes": system.get_process_count(),
