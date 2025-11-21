@@ -267,8 +267,13 @@ async def device_info() -> Dict[str, Any]:
 async def full_status() -> Dict[str, Any]:
     """Get comprehensive system status."""
     try:
-        # Get WiFi info from Termux:API
+        # Get Termux:API info
         wifi_info = system.get_termux_wifi_info()
+        device_info = system.get_termux_device_info()
+
+        # Get network info
+        public_ip = network.get_public_ip()
+        net_stats = network.get_network_stats()
 
         return {
             "success": True,
@@ -277,12 +282,16 @@ async def full_status() -> Dict[str, Any]:
                 "system": system.get_system_info(),
                 "cpu": system.get_cpu_info(),
                 "memory": system.get_memory_info(),
+                "disk": system.get_disk_info(),
                 "battery": system.get_battery_info(),
                 "network": {
                     "tailscale_ip": network.get_tailscale_ip(),
+                    "public_ip": public_ip,
                     "hostname": network.get_hostname(),
                     "wifi": wifi_info,
+                    "stats": net_stats,
                 },
+                "device": device_info,
                 "tmux_sessions": system.get_tmux_sessions(),
                 "processes": system.get_process_count(),
             }

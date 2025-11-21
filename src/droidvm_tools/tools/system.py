@@ -4,10 +4,14 @@ import json
 import os
 import platform
 import subprocess
+import warnings
 from datetime import datetime
 from typing import Dict, Any, Optional
 
 import psutil
+
+# Suppress psutil warnings for restricted Android/Termux environment
+warnings.filterwarnings('ignore', category=RuntimeWarning, module='psutil')
 
 
 def get_system_info() -> Dict[str, Any]:
@@ -16,6 +20,13 @@ def get_system_info() -> Dict[str, Any]:
         boot_time = datetime.fromtimestamp(psutil.boot_time()).isoformat()
     except (PermissionError, OSError):
         boot_time = "N/A"
+
+    # Calculate uptime
+    uptime_seconds = None
+    try:
+        uptime_seconds = int(datetime.now().timestamp() - psutil.boot_time())
+    except (PermissionError, OSError):
+        pass
 
     return {
         "hostname": platform.node(),
@@ -26,6 +37,7 @@ def get_system_info() -> Dict[str, Any]:
         "processor": platform.processor(),
         "python_version": platform.python_version(),
         "boot_time": boot_time,
+        "uptime_seconds": uptime_seconds,
     }
 
 
@@ -37,7 +49,8 @@ def get_cpu_info() -> Dict[str, Any]:
         cpu_freq = None
 
     try:
-        cpu_usage = psutil.cpu_percent(interval=0.1)
+        # Use 1 second interval for more accurate CPU usage measurement
+        cpu_usage = psutil.cpu_percent(interval=1)
         cpu_usage_per_core = psutil.cpu_percent(interval=0.1, percpu=True)
     except (PermissionError, OSError):
         cpu_usage = 0
