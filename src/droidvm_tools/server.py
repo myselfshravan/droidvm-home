@@ -2,14 +2,15 @@
 
 import os
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from droidvm_tools.tools import system, network
+from droidvm_tools.tools import system, network, terminal
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +30,13 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
+
+# Pydantic models for request validation
+class TerminalRequest(BaseModel):
+    command: str
+    mode: str = "typescript"  # Default to typescript mode
+    timeout: Optional[int] = 30  # Only used in termux mode
 
 
 @app.get("/")
@@ -306,6 +314,70 @@ async def full_status() -> Dict[str, Any]:
         return {
             "success": True,
             "data": response_data
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.post("/terminal")
+async def execute_terminal(request: TerminalRequest) -> Dict[str, Any]:
+    """Execute a terminal command in specified mode (termux or typescript).
+
+    Modes:
+    - typescript: Returns hardcoded responses (safe, for demo/portfolio)
+    - termux: Executes real shell commands (whitelisted, safe commands only)
+
+    Example request:
+    {
+        "command": "ls -la",
+        "mode": "typescript",
+        "timeout": 30
+    }
+
+    Returns:
+    {
+        "success": true,
+        "data": {
+            "output": ["line1", "line2"],
+            "exit_code": 0,
+            "mode": "typescript",
+            "command": "ls -la",
+            "execution_time_ms": 5
+        }
+    }
+    """
+    try:
+        # Validate mode
+        if request.mode not in ["termux", "typescript"]:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": f"Invalid mode: {request.mode}. Must be 'termux' or 'typescript'."
+                }
+            )
+
+        # Execute command
+        result = terminal.execute_command(
+            command=request.command,
+            mode=request.mode,
+            timeout=request.timeout
+        )
+
+        # Check if execution had an error
+        if "error" in result and result["exit_code"] != 0:
+            return {
+                "success": False,
+                "error": result.get("error"),
+                "data": result
+            }
+
+        return {
+            "success": True,
+            "data": result
         }
     except Exception as e:
         return JSONResponse(
