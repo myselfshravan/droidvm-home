@@ -2,21 +2,49 @@
 
 import subprocess
 import time
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 
 # Whitelist of safe commands for Termux mode
 SAFE_COMMANDS = [
-    "ls", "pwd", "whoami", "date", "uptime", "uname",
-    "ps", "tmux", "cat", "grep", "head", "tail", "wc",
-    "echo", "which", "file", "stat", "du", "df",
-    "ping", "curl", "wget", "hostname", "getprop"
+    "ls",
+    "pwd",
+    "whoami",
+    "date",
+    "uptime",
+    "uname",
+    "ps",
+    "tmux",
+    "cat",
+    "grep",
+    "head",
+    "tail",
+    "wc",
+    "echo",
+    "which",
+    "file",
+    "stat",
+    "du",
+    "df",
+    "ping",
+    "curl",
+    "wget",
+    "hostname",
+    "getprop",
 ]
 
 # Blocked patterns for security
 BLOCKED_PATTERNS = [
-    "rm", "dd", "mkfs", "mount", "umount",
-    "sudo", "su", "passwd", "chmod", "chown"
+    "rm",
+    "dd",
+    "mkfs",
+    "mount",
+    "umount",
+    "sudo",
+    "su",
+    "passwd",
+    "chmod",
+    "chown",
 ]
 
 # Maximum output lines to prevent huge responses
@@ -42,7 +70,7 @@ def execute_termux_command(command: str, timeout: int = 30) -> Dict[str, Any]:
         return {
             "output": ["Error: Empty command"],
             "exit_code": 1,
-            "error": "Empty command"
+            "error": "Empty command",
         }
 
     base_cmd = cmd_parts[0]
@@ -52,7 +80,7 @@ def execute_termux_command(command: str, timeout: int = 30) -> Dict[str, Any]:
         return {
             "output": [f"Command '{base_cmd}' is not allowed for security reasons."],
             "exit_code": 1,
-            "error": f"Command not whitelisted: {base_cmd}"
+            "error": f"Command not whitelisted: {base_cmd}",
         }
 
     # Check for blocked patterns
@@ -61,7 +89,7 @@ def execute_termux_command(command: str, timeout: int = 30) -> Dict[str, Any]:
             return {
                 "output": [f"Command contains blocked pattern: {pattern}"],
                 "exit_code": 1,
-                "error": f"Blocked pattern detected: {pattern}"
+                "error": f"Blocked pattern detected: {pattern}",
             }
 
     # Execute command
@@ -74,19 +102,21 @@ def execute_termux_command(command: str, timeout: int = 30) -> Dict[str, Any]:
             capture_output=True,
             text=True,
             timeout=timeout,
-            check=False
+            check=False,
         )
 
         execution_time = int((time.time() - start_time) * 1000)
 
         # Split output into lines
-        stdout_lines = result.stdout.strip().split('\n') if result.stdout else []
-        stderr_lines = result.stderr.strip().split('\n') if result.stderr else []
+        stdout_lines = result.stdout.strip().split("\n") if result.stdout else []
+        stderr_lines = result.stderr.strip().split("\n") if result.stderr else []
 
         # Limit output size
         if len(stdout_lines) > MAX_OUTPUT_LINES:
             stdout_lines = stdout_lines[:MAX_OUTPUT_LINES]
-            stdout_lines.append(f"... (output truncated, showing first {MAX_OUTPUT_LINES} lines)")
+            stdout_lines.append(
+                f"... (output truncated, showing first {MAX_OUTPUT_LINES} lines)"
+            )
 
         # Combine stdout and stderr
         output = stdout_lines
@@ -96,20 +126,20 @@ def execute_termux_command(command: str, timeout: int = 30) -> Dict[str, Any]:
         return {
             "output": output if output else [""],
             "exit_code": result.returncode,
-            "execution_time_ms": execution_time
+            "execution_time_ms": execution_time,
         }
 
     except subprocess.TimeoutExpired:
         return {
             "output": [f"Command timed out after {timeout} seconds"],
             "exit_code": 124,
-            "error": "Timeout"
+            "error": "Timeout",
         }
     except Exception as e:
         return {
             "output": [f"Error executing command: {str(e)}"],
             "exit_code": 1,
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -141,29 +171,24 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
             "  exit      - Exit interactive mode",
             "",
         ],
-
         "?": [
             "✔ Available commands:",
             "  help      - Show this help message",
             "  Type 'help' for full command list",
             "",
         ],
-
         "clear": [""],
-
         "whoami": [
             "DroidVM Server - Android phone running as a tiny home server",
             "Powered by Termux and Python",
             "",
         ],
-
         "about": [
             "DroidVM Tools - System monitoring and management for Android devices",
             "Location: Termux Environment",
             "Platform: Android/Linux",
             "",
         ],
-
         "projects": [
             "✔ Active Services:",
             "  • DroidVM Tools API - System monitoring REST API",
@@ -173,7 +198,6 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
             "ℹ Use /status endpoint for detailed system information.",
             "",
         ],
-
         "contact": [
             "✔ API Endpoints:",
             "  📡 /status - System status",
@@ -182,7 +206,6 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
             "  🌐 /network/info - Network details",
             "",
         ],
-
         "skills": [
             "✔ System Capabilities:",
             "  💻 Core: Python, FastAPI, psutil",
@@ -191,24 +214,20 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
             "  📊 Monitoring: CPU, Memory, Battery, Network",
             "",
         ],
-
         "ls": [
             "api/          tools/        system/       network/",
             "status.json   config.env    logs/         docs/",
             "",
         ],
-
         "pwd": [
             "/data/data/com.termux/files/home/droidvm-tools",
             "",
         ],
-
         "cat": [
             "Usage: cat [filename]",
             "Available files: about.txt, status.json, config.env",
             "",
         ],
-
         "cat about.txt": [
             "DroidVM Tools - Turn your Android device into a home server",
             "Version: 0.1.0",
@@ -216,23 +235,19 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
             "Features: System monitoring, API server, Remote access",
             "",
         ],
-
         "cat status.json": [
-            "{ \"status\": \"running\", \"uptime\": \"12h 34m\", \"api\": \"active\" }",
+            '{ "status": "running", "uptime": "12h 34m", "api": "active" }',
             "",
         ],
-
         "exit": [
             "Goodbye! Terminal session ended.",
             "",
         ],
-
         "sudo": [
             "Nice try! 😄",
             "This is not a real terminal. Use Termux mode for actual commands.",
             "",
         ],
-
         "sudo rm -rf /": [
             "🚨 SYSTEM BREACH DETECTED! 🚨",
             "Just kidding! This is a safe environment 😉",
@@ -243,19 +258,19 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
 
     # Check for exact match
     if cmd in responses:
-        return {
-            "output": responses[cmd],
-            "exit_code": 0
-        }
+        return {"output": responses[cmd], "exit_code": 0}
 
     # Check for partial matches
     if cmd.startswith("cat "):
         filename = cmd[4:].strip()
         if filename in ["about.txt", "status.json", "config.env"]:
-            return responses.get(f"cat {filename}", {
-                "output": [f"File '{filename}' is empty or not readable.", ""],
-                "exit_code": 0
-            })
+            return responses.get(
+                f"cat {filename}",
+                {
+                    "output": [f"File '{filename}' is empty or not readable.", ""],
+                    "exit_code": 0,
+                },
+            )
 
     if "sudo" in cmd:
         return {
@@ -263,7 +278,7 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
                 "sudo: command not found (and you probably shouldn't try that here! 😅)",
                 "",
             ],
-            "exit_code": 127
+            "exit_code": 127,
         }
 
     # Default response for unknown commands
@@ -273,11 +288,13 @@ def execute_typescript_command(command: str) -> Dict[str, Any]:
             "Type 'help' for available commands.",
             "",
         ],
-        "exit_code": 127
+        "exit_code": 127,
     }
 
 
-def execute_command(command: str, mode: str = "typescript", timeout: int = 30) -> Dict[str, Any]:
+def execute_command(
+    command: str, mode: str = "typescript", timeout: int = 30
+) -> Dict[str, Any]:
     """Execute a command in the specified mode.
 
     Args:
@@ -298,7 +315,7 @@ def execute_command(command: str, mode: str = "typescript", timeout: int = 30) -
         return {
             "output": [f"Invalid mode: {mode}. Use 'termux' or 'typescript'."],
             "exit_code": 1,
-            "error": "Invalid mode"
+            "error": "Invalid mode",
         }
 
     # Add execution time if not already present
