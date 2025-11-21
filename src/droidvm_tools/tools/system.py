@@ -28,8 +28,12 @@ def get_system_info() -> Dict[str, Any]:
     except (PermissionError, OSError):
         pass
 
+    # Get hostname with fallback logic
+    from droidvm_tools.tools.network import get_hostname
+    hostname = get_hostname()
+
     return {
-        "hostname": platform.node(),
+        "hostname": hostname,
         "platform": platform.system(),
         "platform_release": platform.release(),
         "platform_version": platform.version(),
@@ -49,9 +53,17 @@ def get_cpu_info() -> Dict[str, Any]:
         cpu_freq = None
 
     try:
-        # Use 1 second interval for more accurate CPU usage measurement
-        cpu_usage = psutil.cpu_percent(interval=1)
-        cpu_usage_per_core = psutil.cpu_percent(interval=0.1, percpu=True)
+        # First call initializes, second call gets actual usage
+        # This is more reliable than using interval parameter
+        psutil.cpu_percent(interval=None, percpu=False)
+        psutil.cpu_percent(interval=None, percpu=True)
+
+        # Small sleep then get actual values
+        import time
+        time.sleep(0.5)
+
+        cpu_usage = psutil.cpu_percent(interval=None, percpu=False)
+        cpu_usage_per_core = psutil.cpu_percent(interval=None, percpu=True)
     except (PermissionError, OSError):
         cpu_usage = 0
         cpu_usage_per_core = []

@@ -275,25 +275,37 @@ async def full_status() -> Dict[str, Any]:
         public_ip = network.get_public_ip()
         net_stats = network.get_network_stats()
 
+        # Only include network stats if we have actual data (not permission denied)
+        network_data = {
+            "tailscale_ip": network.get_tailscale_ip(),
+            "public_ip": public_ip,
+            "hostname": network.get_hostname(),
+            "wifi": wifi_info,
+        }
+
+        # Add stats only if available (no error)
+        if "error" not in net_stats:
+            network_data["stats"] = net_stats
+
+        # Build response data
+        response_data = {
+            "timestamp": datetime.now().isoformat(),
+            "system": system.get_system_info(),
+            "cpu": system.get_cpu_info(),
+            "memory": system.get_memory_info(),
+            "battery": system.get_battery_info(),
+            "network": network_data,
+            "tmux_sessions": system.get_tmux_sessions(),
+            "processes": system.get_process_count(),
+        }
+
+        # Only include device info if it's actually available (not all Unknown values)
+        if device_info and not all(v == "Unknown" or v == 0 for v in device_info.values()):
+            response_data["device"] = device_info
+
         return {
             "success": True,
-            "data": {
-                "timestamp": datetime.now().isoformat(),
-                "system": system.get_system_info(),
-                "cpu": system.get_cpu_info(),
-                "memory": system.get_memory_info(),
-                "battery": system.get_battery_info(),
-                "network": {
-                    "tailscale_ip": network.get_tailscale_ip(),
-                    "public_ip": public_ip,
-                    "hostname": network.get_hostname(),
-                    "wifi": wifi_info,
-                    "stats": net_stats,
-                },
-                "device": device_info,
-                "tmux_sessions": system.get_tmux_sessions(),
-                "processes": system.get_process_count(),
-            }
+            "data": response_data
         }
     except Exception as e:
         return JSONResponse(
