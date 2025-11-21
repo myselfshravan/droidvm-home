@@ -282,7 +282,6 @@ async def full_status() -> Dict[str, Any]:
                 "system": system.get_system_info(),
                 "cpu": system.get_cpu_info(),
                 "memory": system.get_memory_info(),
-                "disk": system.get_disk_info(),
                 "battery": system.get_battery_info(),
                 "network": {
                     "tailscale_ip": network.get_tailscale_ip(),

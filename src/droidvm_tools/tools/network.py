@@ -153,7 +153,36 @@ def get_public_ip() -> Optional[str]:
 
 
 def get_hostname() -> str:
-    """Get the system hostname."""
+    """Get the system hostname.
+
+    Tries multiple methods to get a meaningful hostname:
+    1. Environment variable DROIDVM_HOSTNAME (user-defined)
+    2. Termux device name (termux-telephony-deviceinfo)
+    3. System hostname from socket.gethostname()
+    """
+    import os
+
+    # 1. Check for custom hostname from environment
+    custom_hostname = os.getenv("DROIDVM_HOSTNAME")
+    if custom_hostname:
+        return custom_hostname
+
+    # 2. Try to get device name from Termux:API
+    try:
+        result = subprocess.run(
+            ["getprop", "ro.product.model"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=True
+        )
+        model = result.stdout.strip()
+        if model and model != "localhost":
+            return model
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # 3. Fall back to system hostname
     return socket.gethostname()
 
 
